@@ -68,6 +68,7 @@ fn location_query(){
                     dirdiv_details.innerHTML = "";
                     for(var j=0;j<va_facs.length;j++){
                         if(va_facs[j].attributes.name === e.target._popup._content){
+                            console.log(va_facs[j].attributes);
                             var title_p = document.createElement("h1");
                             var name = va_facs[j].attributes.name;
                             title_p.id = "location-name";
@@ -84,6 +85,26 @@ fn location_query(){
                             var divRow = document.createElement("div");
                             divRow.className = "row";
                             dirdiv.append(divRow);
+                        }if(va_facs[j].attributes.name === e.target._popup._content && va_facs[j].attributes.phone.main != null){
+                            var phone_p = document.createElement("p");
+                            var txt = "phone number :"+va_facs[j].attributes.phone.main;
+                            phone_p.innerHTML = txt;
+                            document.getElementById("details").append(phone_p);
+                        }if(va_facs[j].attributes.name === e.target._popup._content && va_facs[j].attributes.hours != null){
+                            console.log(va_facs[j].attributes);
+                            var hours_tag = document.createElement("p");
+                            hours_tag.innerHTML = "Hours For Facility Below";
+                            var hours_p = document.createElement("p");
+                            var hours_ul = document.createElement("ul");
+                            for(var key in va_facs[j].attributes.hours){
+                                var new_li = document.createElement("li");
+                                var txt = key + " : " + va_facs[j].attributes.hours[key];
+                                new_li.innerHTML = txt;
+                                hours_ul.append(new_li);
+                            }
+                            hours_p.append(hours_ul);
+                            document.getElementById("details").append(hours_tag);
+                            document.getElementById("details").append(hours_p);
                         }
                     }
                     appendDirectionButton(dirdiv);
@@ -125,6 +146,7 @@ fn location_query(){
                                 }
                                 var polyline = L.polyline(latlng_arr, {color: "red", weight: 6}).addTo(map);
                                 socket.close();
+                                map.removeLayer();
                             }
                         }
                     }
