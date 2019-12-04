@@ -1,0 +1,37 @@
+.warning {
+    border: 1px solid red;
+    border-radius: 4px;
+    visibility: hidden;
+    text-align: center;
+    background-color: #ff0000;
+}
+
+.mapcontainer {
+    height:85vh;
+    max-width: 85%;
+}
+
+
+
+body {
+    padding-top: 0px;
+}
+@media (max-width: 979px) {
+    body {
+        padding-top: 0px;
+    }
+}
+
+.style-text {
+    margin: 10px;
+}
+
+.style-text p {
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+}
+
+.margin-tainer{
+    margin: 5%;
+}

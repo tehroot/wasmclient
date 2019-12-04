@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Websockets Multisocket</title>
+    <link rel='stylesheet' href='site-sheet.css'/>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+ 	<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+	<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" crossorigin=""></script>
+	<link href="https://fonts.googleapis.com/css?family=Inconsolata|Montserrat&display=swap" rel="stylesheet">
+</head>
+<script src="wasmclient.js"></script>
+<body>
+	<nav class ="navbar navbar-expand-lg navbar-light bg-dark sticky-top">
+		<div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
+			<ul class="navbar-nav">
+  		</ul>
+		</div>
+		<div class="mx-auto my-2 order-0 order-md-1 position-relative">
+			<a class="navbar-brand text-light mx-auto">Map Browser</a>
+		</div>
+  		<div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+  			<ul class="navbar-nav ml-auto">
+  				
+  			</ul> 
+  		</div>
+	</nav>
+	<div class="container-fluid">
+		<div class="container">
+			<div class="row justify-content-center style-text border border-dark">
+				<p>Map displays below, please use the textbox on the right to enter your location query. Press enter to start the geocoding process.</p>
+			</div>
+		</div>
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-lg-9">
+					<div class="container-fluid mapcontainer" id="mapcontainer">
+						<div class="container-fluid mapcontainer" id="map">
+
+						</div>
+					</div>
+				</div>
+				<div class="col-lg-3">
+					<div class="row">
+						<div class="container-fluid form-input" id="input">
+							<label class="form-control-lg">Query Pos: </label>
+							<input class="form-control form-control-lg" type="text" name="location_input" id="location_input" placeholder="Enter your location here">
+						</div>
+					</div>
+					<div class="container-fluid" id="directions">
+						<div class="fac_details" id="details">
+
+						</div>
+
+						<div class="details_directions" id="detail_directions">
+
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="listener-output">
+		</div>
+	</div>
+</body>
+</html>
