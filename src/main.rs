@@ -1,11 +1,15 @@
 #![recursion_limit="1024"]
 extern crate stdweb;
+extern crate serde_json;
 use stdweb::unstable::TryInto;
 use stdweb::{js};
 use stdweb::traits::*;
 use stdweb::web::html_element::InputElement;
-use stdweb::web::{HtmlElement, document, WebSocket, Element, MutationObserver};
-use stdweb::web::event::{KeyPressEvent, SocketOpenEvent, SocketCloseEvent, SocketErrorEvent, SocketMessageEvent, ClickEvent};
+use stdweb::web::{HtmlElement, document, WebSocket, Element};
+use stdweb::web::event::{KeyPressEvent, SocketOpenEvent, SocketCloseEvent, SocketErrorEvent, SocketMessageEvent, ClickEvent, SocketMessageData};
+use serde_json::{Result, Value};
+use std::cell::{RefCell, RefMut};
+use std::rc::Rc;
 
 //creates a macro in rust to perform some expression/ownership enclosing
 macro_rules! enclose {
@@ -19,9 +23,43 @@ macro_rules! enclose {
     };
 }
 
+struct UserLoc {
+    latitude: i64,
+    longitude: i64
+}
+
+impl UserLoc {
+    fn parse_coords(input_coord: &str) -> Self{
+        
+    }
+
+    fn set_lat(&mut self){
+        self.longitude
+    }
+
+    fn set_lon(&mut self){
+        self.longitude
+    }
+}
+
+
+fn directions_query() {
+
+}
+
+fn facilities_query(user_pos: Rc<RefCell<UserLoc>>) -> {
+    let ws = WebSocket::new("ws://localhost:8844/websockets/gmaps_queries").unwrap();
+    ws.add_event_listener(enclose!((user_pos) move | event: SocketMessageEvent| {
+    user_pos.borrow_mut().
+        &event.data().into_text()
+        ws.close();
+    }));
+}
+
+
 fn location_query(){
-    let me = WebSocket::new("ws://0.0.0.0:8844/websockets/data").unwrap();
-    let ws = WebSocket::new("ws://0.0.0.0:8844/websockets/data").unwrap();
+    let me = WebSocket::new("ws://localhost:8844/websockets/data").unwrap();
+    let ws = WebSocket::new("ws://localhost:8844/websockets/data").unwrap();
     let text_entry: InputElement = document().query_selector(".form-input input").unwrap().unwrap().try_into().unwrap();
     me.add_event_listener(move |event : SocketMessageEvent| {
         let fac_query: String = (&event.data().into_text().unwrap().to_owned()).parse().unwrap();
@@ -52,7 +90,7 @@ fn location_query(){
         ws.send_text(&coords_owned).unwrap();
         ws.add_event_listener(move |event : SocketMessageEvent| {
             let fac_results: String = (&event.data().into_text().unwrap().to_owned()).parse().unwrap();
-            let result = js! {
+            js! {
                 var va_facs = new Array();
                 var splitStrings = @{fac_results}.trim().split("/n");
                 for(var i=0; i<splitStrings.length; i++){
@@ -104,17 +142,15 @@ fn location_query(){
                     for(var l=0;l<va_facs.length;l++){
                         if(va_facs[l].attributes.name === dest_name){
                             dest_loc = "["+map.getCenter().lat+";"+map.getCenter().lng+";"+va_facs[l].attributes.lat +";"+va_facs[l].attributes.long+"]";
-                            let socket = new WebSocket("ws://0.0.0.0:8844/websockets/data");
+                            let socket = new WebSocket("ws://localhost:8844/websockets/data");
                             socket.onopen = function(event){
                                 socket.send("directions,latlng="+dest_loc);
                             };
                             socket.onmessage = function(event){
-                                console.log(event.data);
                                 var dir_doc = document.getElementById("detail_directions");
-                                var directions = event.data.split("%");
+                                var directions = event.data.split(";");
                                 var text_directions = directions[0].split("/n");
                                 var polyline = directions[1];
-                                console.log(polyline);
                                 var latlng_arr = JSON.parse(directions[2]);
                                 text_directions.pop();
                                 for(var m=0;m<text_directions.length;m++){
@@ -152,6 +188,21 @@ fn location_query(){
 
 fn main() {
     stdweb::initialize();
-    location_query();
+    let init_userloc = Rc::new(RefCell::new(UserLoc));
+    let ws = WebSocket::new("ws://localhost:8844/websockets/gmaps_queries").unwrap();
+    let text_entry: InputElement = document().query_selector(".form-input input").unwrap().unwrap().try_into().unwrap();
+    text_entry.add_event_listener(enclose!((text_entry) move |event: KeyPressEvent| {
+        if event.key() == "Enter" {
+            event.prevent_default();
+            let text: String = text_entry.raw_value();
+            if text.is_empty() == false {
+                text_entry.set_raw_value("");
+                let owned_txt: String = "geocode,query=".to_owned()+&text.to_string();
+                ws.send_text(&owned_txt).unwrap();
+                facilities_query(init_userloc);
+            }
+        }
+    }));
+    //location_query();
     stdweb::event_loop();
 }
