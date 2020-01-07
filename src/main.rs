@@ -1,15 +1,19 @@
 #![recursion_limit="1024"]
 extern crate stdweb;
 extern crate serde_json;
+
+use std::ops::Deref;
 use stdweb::unstable::TryInto;
-use stdweb::{js};
+use stdweb::{js, console};
 use stdweb::traits::*;
 use stdweb::web::html_element::InputElement;
-use stdweb::web::{HtmlElement, document, WebSocket, Element};
+use stdweb::web::{HtmlElement, document, WebSocket, Element, SocketReadyState};
 use stdweb::web::event::{KeyPressEvent, SocketOpenEvent, SocketCloseEvent, SocketErrorEvent, SocketMessageEvent, ClickEvent, SocketMessageData};
 use serde_json::{Result, Value};
 use std::cell::{RefCell, RefMut};
 use std::rc::Rc;
+use std::time::Duration;
+use std::thread::sleep;
 
 //creates a macro in rust to perform some expression/ownership enclosing
 macro_rules! enclose {
@@ -29,16 +33,25 @@ struct UserLoc {
 }
 
 impl UserLoc {
-    fn parse_coords(input_coord: &str) -> Self{
-        
+    fn new() -> Self {
+        UserLoc {
+            latitude: 0,
+            longitude: 0
+        }
     }
 
-    fn set_lat(&mut self){
-        self.longitude
+    fn parse_coords(&mut self, input_coord: &str){
+        let v: serde_json::value::Value = serde_json::from_str(input_coord).unwrap();
+        self.longitude = v["lng"].as_i64().unwrap();
+        self.latitude = v["lat"].as_i64().unwrap();
     }
 
-    fn set_lon(&mut self){
-        self.longitude
+    fn set_lat(&mut self, latitude: i64){
+        self.latitude = latitude;
+    }
+
+    fn set_lon(&mut self, longitude: i64){
+        self.longitude = longitude
     }
 }
 
@@ -47,13 +60,16 @@ fn directions_query() {
 
 }
 
-fn facilities_query(user_pos: Rc<RefCell<UserLoc>>) -> {
+fn facilities_query(geocode: String, user_pos: Rc<RefCell<UserLoc>>) {
     let ws = WebSocket::new("ws://localhost:8844/websockets/gmaps_queries").unwrap();
-    ws.add_event_listener(enclose!((user_pos) move | event: SocketMessageEvent| {
-    user_pos.borrow_mut().
-        &event.data().into_text()
-        ws.close();
-    }));
+    js!{console.log("hello_1");}
+    if ws.ready_state() == SocketReadyState::Open {
+        ws.add_event_listener(enclose!((user_pos) move | event: SocketMessageEvent| {
+            let mut user_loc = user_pos.borrow_mut();
+            user_loc.parse_coords(&event.data().into_text().unwrap());
+            let lng = user_loc.latitude;
+        }));
+    }
 }
 
 
@@ -188,18 +204,18 @@ fn location_query(){
 
 fn main() {
     stdweb::initialize();
-    let init_userloc = Rc::new(RefCell::new(UserLoc));
-    let ws = WebSocket::new("ws://localhost:8844/websockets/gmaps_queries").unwrap();
+    //RefCell -- sharable mutable container, not thread safe
+    let init_userloc = Rc::new(RefCell::new(UserLoc::new()));
     let text_entry: InputElement = document().query_selector(".form-input input").unwrap().unwrap().try_into().unwrap();
-    text_entry.add_event_listener(enclose!((text_entry) move |event: KeyPressEvent| {
+    text_entry.add_event_listener(enclose!((init_userloc, text_entry) move |event: KeyPressEvent| {
         if event.key() == "Enter" {
             event.prevent_default();
             let text: String = text_entry.raw_value();
             if text.is_empty() == false {
                 text_entry.set_raw_value("");
                 let owned_txt: String = "geocode,query=".to_owned()+&text.to_string();
-                ws.send_text(&owned_txt).unwrap();
-                facilities_query(init_userloc);
+                //clone into closure
+                facilities_query(owned_txt, init_userloc.clone());
             }
         }
     }));
