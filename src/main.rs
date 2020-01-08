@@ -20,8 +20,8 @@ macro_rules! enclose {
 }
 
 fn location_query(){
-    let me = WebSocket::new("ws://0.0.0.0:8844/websockets/data").unwrap();
-    let ws = WebSocket::new("ws://0.0.0.0:8844/websockets/data").unwrap();
+    let me = WebSocket::new("ws://localhost:8844/websockets/va_facilities_endpoints").unwrap();
+    let ws = WebSocket::new("ws://localhost:8844/websockets/gmaps_queries").unwrap();
     let text_entry: InputElement = document().query_selector(".form-input input").unwrap().unwrap().try_into().unwrap();
     me.add_event_listener(move |event : SocketMessageEvent| {
         let fac_query: String = (&event.data().into_text().unwrap().to_owned()).parse().unwrap();
@@ -125,7 +125,7 @@ fn location_query(){
                     for(var l=0;l<va_facs.length;l++){
                         if(va_facs[l].attributes.name === dest_name){
                             dest_loc = "["+map.getCenter().lat+";"+map.getCenter().lng+";"+va_facs[l].attributes.lat +";"+va_facs[l].attributes.long+"]";
-                            let socket = new WebSocket("ws://0.0.0.0:8844/websockets/data");
+                            let socket = new WebSocket("ws://localhost:8844/websockets/gmaps_queries");
                             socket.onopen = function(event){
                                 socket.send("directions,latlng="+dest_loc);
                             };
@@ -152,11 +152,6 @@ fn location_query(){
                     }
                 }
             };
-            /*
-            let cont = document().get_element_by_id("details");
-            let callback = || {  };
-            let mut_obsv = MutationObserver::new();
-            */
         });
     });
     text_entry.add_event_listener(enclose!((text_entry) move |event: KeyPressEvent| {
@@ -175,5 +170,4 @@ fn location_query(){
 fn main() {
     stdweb::initialize();
     location_query();
-    stdweb::event_loop();
 }
