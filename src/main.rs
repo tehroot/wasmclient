@@ -26,48 +26,66 @@ macro_rules! enclose {
 }
 
 struct UserLoc {
-    latitude: u64,
-    longitude: u64
+    latitude: f64,
+    longitude: f64
 }
 
 impl UserLoc {
     fn new() -> Self {
         UserLoc {
-            latitude: 0,
-            longitude: 0
+            latitude: 0.0,
+            longitude: 0.0
         }
     }
 
-    fn parse_coords(&mut self, input_coord: &str) -> Result<()>{
+    fn parse_coords(&mut self, input_coord: &str){
         let lat: stdweb::Value = js!{
             return JSON.parse(@{ input_coord }).lat;
         }.try_into().unwrap();
         let lng: stdweb::Value = js!{
             return JSON.parse(@{ input_coord }).lng;
         }.try_into().unwrap();
-
         self.latitude = lat.try_into().unwrap();
         self.longitude = lng.try_into().unwrap();
-        js!{console.log(@{ self.latitude.to_string() });};
-        Ok(())
     }
 
-    fn set_lat(&mut self, latitude: u64){
+    fn set_lat(&mut self, latitude: f64){
         self.latitude = latitude;
     }
 
-    fn set_lon(&mut self, longitude: u64){
+    fn set_lon(&mut self, longitude: f64){
         self.longitude = longitude
     }
 }
 
-fn facilities_query(ws: WebSocket, geocode: String, user_pos: Rc<RefCell<UserLoc>>) {
+fn user_query_to_loc(ws: WebSocket, geocode: String, user_pos: &Rc<RefCell<UserLoc>>) {
     //let ws = WebSocket::new("ws://localhost:8844/websockets/gmaps_queries").unwrap();
     ws.send_text(&geocode);
     ws.add_event_listener(enclose!((user_pos) move | event: SocketMessageEvent| {
         let str = &event.data().into_text().unwrap().clone();
         user_pos.borrow_mut().parse_coords(str);
+        js!{console.log(@{&user_pos.borrow_mut().latitude})}
+
     }));
+}
+
+fn construct_user_loc_map(user_pos: &Rc<RefCell<UserLoc>>) {
+    let map_container = match document().get_element_by_id("map") {
+        Some(map) => {
+            map.parent_element().unwrap().parent_node().unwrap().remove_child(map.as_node());
+            let new_container = document().create_element("div");
+            let new_container_element = new_container.unwrap();
+            new_container_element.set_attribute("id", "map").unwrap();
+            new_container_element.class_list().add("container-fluid").unwrap();
+            new_container_element.class_list().add("mapcontainer").unwrap();
+            document().get_element_by_id("mapcontainer").unwrap().append_child(&new_container_element);
+            
+        },
+        None => {
+
+        }
+    };
+
 }
 
 fn location_query(){
@@ -199,7 +217,7 @@ fn main() {
     //RefCell -- sharable mutable container, not thread safe
     let init_userloc = Rc::new(RefCell::new(UserLoc::new()));
     let text_entry: InputElement = document().query_selector(".form-input input").unwrap().unwrap().try_into().unwrap();
-    text_entry.add_event_listener(enclose!((text_entry) move |event: KeyPressEvent| {
+    text_entry.add_event_listener(enclose!((text_entry, init_userloc) move |event: KeyPressEvent| {
         if event.key() == "Enter" {
             event.prevent_default();
             let text: String = text_entry.raw_value();
@@ -207,7 +225,7 @@ fn main() {
                 text_entry.set_raw_value("");
                 let owned_txt: String = "geocode,query=".to_owned()+&text.to_string();
                 //clone into closure
-                facilities_query(ws.clone(), owned_txt, init_userloc.clone());
+                user_query_to_loc(ws.clone(), owned_txt, &init_userloc);
             }
         }
     }));
