@@ -2,8 +2,9 @@
 extern crate stdweb;
 extern crate serde_json;
 
+use stdweb::unstable::TryFrom;
 use stdweb::unstable::TryInto;
-use stdweb::{js};
+use stdweb::{js, Number};
 use stdweb::traits::*;
 use stdweb::web::html_element::InputElement;
 use stdweb::web::{HtmlElement, document, WebSocket, Element, SocketReadyState};
@@ -25,8 +26,8 @@ macro_rules! enclose {
 }
 
 struct UserLoc {
-    latitude: i64,
-    longitude: i64
+    latitude: u64,
+    longitude: u64
 }
 
 impl UserLoc {
@@ -38,24 +39,24 @@ impl UserLoc {
     }
 
     fn parse_coords(&mut self, input_coord: &str) -> Result<()>{
-        self.latitude = js!{
+        let lat: stdweb::Value = js!{
             return JSON.parse(@{ input_coord }).lat;
         }.try_into().unwrap();
-        self.longitude = js!{
+        let lng: stdweb::Value = js!{
             return JSON.parse(@{ input_coord }).lng;
         }.try_into().unwrap();
 
+        self.latitude = lat.try_into().unwrap();
+        self.longitude = lng.try_into().unwrap();
         js!{console.log(@{ self.latitude.to_string() });};
         Ok(())
-        //self.longitude = v["lng"].as_i64().unwrap();
-        //self.latitude = v["lat"].as_i64().unwrap();
     }
 
-    fn set_lat(&mut self, latitude: i64){
+    fn set_lat(&mut self, latitude: u64){
         self.latitude = latitude;
     }
 
-    fn set_lon(&mut self, longitude: i64){
+    fn set_lon(&mut self, longitude: u64){
         self.longitude = longitude
     }
 }
