@@ -72,17 +72,17 @@ fn user_query_to_loc(ws: WebSocket, geocode: String, user_pos: &Rc<RefCell<UserL
 fn construct_user_loc_map(user_pos: &Rc<RefCell<UserLoc>>) {
     let map_container = match document().get_element_by_id("map") {
         Some(map) => {
-            map.parent_element().unwrap().parent_node().unwrap().remove_child(map.as_node());
+            map.parent_element().unwrap().parent_node().unwrap().remove_child(map.as_node()).unwrap();
             let new_container = document().create_element("div");
             let new_container_element = new_container.unwrap();
             new_container_element.set_attribute("id", "map").unwrap();
             new_container_element.class_list().add("container-fluid").unwrap();
             new_container_element.class_list().add("mapcontainer").unwrap();
             document().get_element_by_id("mapcontainer").unwrap().append_child(&new_container_element);
-            
+            js!{}
         },
         None => {
-
+            js!{}
         }
     };
 
