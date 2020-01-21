@@ -65,24 +65,37 @@ fn user_query_to_loc(ws: WebSocket, geocode: String, user_pos: &Rc<RefCell<UserL
         let str = &event.data().into_text().unwrap().clone();
         user_pos.borrow_mut().parse_coords(str);
         js!{console.log(@{&user_pos.borrow_mut().latitude})}
-
+        construct_user_loc_map(&user_pos);
     }));
 }
 
 fn construct_user_loc_map(user_pos: &Rc<RefCell<UserLoc>>) {
     let map_container = match document().get_element_by_id("map") {
         Some(map) => {
-            map.parent_element().unwrap().parent_node().unwrap().remove_child(map.as_node()).unwrap();
-            let new_container = document().create_element("div");
-            let new_container_element = new_container.unwrap();
-            new_container_element.set_attribute("id", "map").unwrap();
-            new_container_element.class_list().add("container-fluid").unwrap();
-            new_container_element.class_list().add("mapcontainer").unwrap();
-            document().get_element_by_id("mapcontainer").unwrap().append_child(&new_container_element);
-            js!{}
+            let map_container_parent = match map.parent_element() {
+                Some(map_parent) => {
+                    map_parent.remove_child(&map);
+                    let new_container = document().create_element("div");
+                    let new_container_element = new_container.unwrap();
+                    new_container_element.set_attribute("id", "map").unwrap();
+                    new_container_element.class_list().add("container-fluid").unwrap();
+                    new_container_element.class_list().add("mapcontainer").unwrap();
+                    document().get_element_by_id("mapcontainer").unwrap().append_child(&new_container_element);
+                    js!{
+                        map = L.map("map").setView([@{user_pos.borrow_mut().latitude}, @{user_pos.borrow_mut().longitude}], 13);
+                        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+                    };
+                },
+                None => {
+                    js!{
+                        map = L.map("map").setView([@{user_pos.borrow_mut().latitude}, @{user_pos.borrow_mut().longitude}], 13);
+                        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+                    };
+                }
+            };
         },
         None => {
-            js!{}
+
         }
     };
 
