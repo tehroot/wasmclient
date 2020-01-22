@@ -58,6 +58,7 @@ impl UserLoc {
     }
 }
 
+
 fn user_query_to_loc(ws: WebSocket, geocode: String, user_pos: &Rc<RefCell<UserLoc>>) {
     //let ws = WebSocket::new("ws://localhost:8844/websockets/gmaps_queries").unwrap();
     ws.send_text(&geocode);
@@ -95,10 +96,19 @@ fn construct_user_loc_map(user_pos: &Rc<RefCell<UserLoc>>) {
             };
         },
         None => {
-
+            let error_msg = document().create_element("div").unwrap();
+            let error_msg_content: &str = "error creating map canvas";
+            error_msg.set_text_content(error_msg_content);
+            document().append_child(&error_msg);
         }
     };
+}
 
+fn facilities_endpoint_query(user_pos: &Rc<RefCell<UserLoc>>) -> Result<(serde_json::Value)>{
+    let fac_req = WebSocket::new("ws://localhost:8844/websockets/va_facilities").unwrap();
+    let fac_req_content: String = "facilities,query=".to_owned()+&user_pos.borrow_mut().longitude.to_string();
+    fac_req.send_text()
+    let fac_resp: Value = serde_json::from_str();
 }
 
 fn location_query(){
@@ -227,7 +237,7 @@ fn location_query(){
 
 fn main() {
     let ws = WebSocket::new("ws://localhost:8844/websockets/gmaps_queries").unwrap();
-    //RefCell -- sharable mutable container, not thread safe
+    //RefCell -- sharable mutable container, not thread safe :: good thing this is converted to javascript and not webworkers aaaaayyyy lmao
     let init_userloc = Rc::new(RefCell::new(UserLoc::new()));
     let text_entry: InputElement = document().query_selector(".form-input input").unwrap().unwrap().try_into().unwrap();
     text_entry.add_event_listener(enclose!((text_entry, init_userloc) move |event: KeyPressEvent| {
