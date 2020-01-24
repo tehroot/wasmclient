@@ -105,9 +105,17 @@ fn construct_user_loc_map(user_pos: &Rc<RefCell<UserLoc>>) {
 }
 
 fn facilities_endpoint_query(user_pos: &Rc<RefCell<UserLoc>>) -> Result<(serde_json::Value)>{
-    let fac_req = WebSocket::new("ws://localhost:8844/websockets/va_facilities").unwrap();
+    let fac_req = match WebSocket::new("ws://localhost:8844/websockets/va_facilities") {
+      Ok(fac_req_soc) => {
+
+      },
+        //ok err type -> socket creation error
+      Err(socket_create_error) => {
+
+      }
+    };
+
     let fac_req_content: String = "facilities,query=".to_owned()+&user_pos.borrow_mut().longitude.to_string();
-    fac_req.send_text()
     let fac_resp: Value = serde_json::from_str();
 }
 
