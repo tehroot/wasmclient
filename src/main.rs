@@ -107,16 +107,23 @@ fn construct_user_loc_map(user_pos: &Rc<RefCell<UserLoc>>) {
 fn facilities_endpoint_query(user_pos: &Rc<RefCell<UserLoc>>) -> Result<(serde_json::Value)>{
     let fac_req = match WebSocket::new("ws://localhost:8844/websockets/va_facilities") {
       Ok(fac_req_soc) => {
-
+          let fac_req_send_content: String = "facilities,query=".to_owned()+&user_pos.borrow_mut().longitude.to_string()+","+&user_pos.borrow_mut().latitude.to_string();
+          fac_req_soc.send_text(&fac_req_send_content);
       },
         //ok err type -> socket creation error
       Err(socket_create_error) => {
-
+          let err_element = document().create_element().unwrap();
+          err_element.class_list().add("warning");
+          err_element.set_text_content("Error, facilities query. Try again.");
+          //add container div at top of page for websocket errors
       }
     };
+    Ok(Value::from(()))
+}
 
-    let fac_req_content: String = "facilities,query=".to_owned()+&user_pos.borrow_mut().longitude.to_string();
-    let fac_resp: Value = serde_json::from_str();
+//generate a new error message to display on the page
+fn error_msg_gen(error_msg: &str){
+
 }
 
 fn location_query(){
@@ -244,7 +251,6 @@ fn location_query(){
 }
 
 fn main() {
-    let ws = WebSocket::new("ws://localhost:8844/websockets/gmaps_queries").unwrap();
     //RefCell -- sharable mutable container, not thread safe :: good thing this is converted to javascript and not webworkers aaaaayyyy lmao
     let init_userloc = Rc::new(RefCell::new(UserLoc::new()));
     let text_entry: InputElement = document().query_selector(".form-input input").unwrap().unwrap().try_into().unwrap();
@@ -255,8 +261,15 @@ fn main() {
             if text.is_empty() == false {
                 text_entry.set_raw_value("");
                 let owned_txt: String = "geocode,query=".to_owned()+&text.to_string();
-                //clone into closure
-                user_query_to_loc(ws.clone(), owned_txt, &init_userloc);
+                let init_quer = match WebSocket::new("ws://localhost:8844/websockets/gmaps_queries") {
+                    Ok(loc_query_soc) => {
+                        //clone into closure
+                        user_query_to_loc(init_quer.clone(), owned_txt, &init_userloc);
+                    },
+                    Err(socket_create_error) => {
+                        //socket create error, element display, same as above in facilities_endpoint_query fuction
+                    };
+                };
             }
         }
     }));
